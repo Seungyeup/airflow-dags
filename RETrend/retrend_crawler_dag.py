@@ -13,8 +13,7 @@ default_args = {
 with DAG(
     dag_id='retrend_real_estate_crawler',
     default_args=default_args,
-    schedule_interval='0 0 * * *', # Run daily at midnight
-    start_date=pendulum.datetime(2023, 1, 1, tz="Asia/Seoul"),
+            schedule='0 0 * * *', # Run daily at midnight (changed from schedule_interval)    start_date=pendulum.datetime(2023, 1, 1, tz="Asia/Seoul"),
     catchup=False,
     tags=['retrend', 'crawler', 'minio'],
 ) as dag:
