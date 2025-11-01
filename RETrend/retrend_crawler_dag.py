@@ -1,6 +1,5 @@
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
-from airflow.utils.dates import days_ago
 import pendulum
 
 default_args = {
