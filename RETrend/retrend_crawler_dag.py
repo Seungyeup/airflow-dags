@@ -85,6 +85,30 @@ with DAG(
         get_logs=True,
     )
 
+    extract_pyeonginfo = KubernetesPodOperator(
+        task_id="extract_pyeonginfo_data",
+        name="extract-pyeonginfo-data",
+        namespace="airflow",
+        image="dave126/retrend-crawler:latest",
+        cmds=["python"],
+        arguments=["/app/src/extract_pyeonginfo_to_csv_s3.py"],
+        do_xcom_push=False,
+        is_delete_operator_pod=True,
+        get_logs=True,
+    )
+
+    extract_trade_history = KubernetesPodOperator(
+        task_id="extract_trade_history_data",
+        name="extract-trade-history-data",
+        namespace="airflow",
+        image="dave126/retrend-crawler:latest",
+        cmds=["python"],
+        arguments=["/app/src/extract_trade_history_s3.py"],
+        do_xcom_push=False,
+        is_delete_operator_pod=True,
+        get_logs=True,
+    )
+
     end_task = KubernetesPodOperator(
         task_id="end_crawler_pipeline",
         name="end-crawler-pipeline",
@@ -97,4 +121,11 @@ with DAG(
         get_logs=True,
     )
 
-    start_task >> extract_shido >> extract_shigungu >> extract_eupmeandong >> extract_complexes >> end_task
+    start_task \
+        >> extract_shido \
+        >> extract_shigungu \
+        >> extract_eupmeandong \
+        >> extract_complexes \
+        >> extract_pyeonginfo \
+        >> extract_trade_history \
+        >> end_task
