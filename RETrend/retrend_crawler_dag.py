@@ -3,7 +3,6 @@ from datetime import timedelta
 
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
-from airflow.operators.python import ShortCircuitOperator
 
 # KST 타임존
 local_tz = pendulum.timezone("Asia/Seoul")
@@ -24,29 +23,8 @@ with DAG(
     schedule_interval="0 0 * * *",                   # Airflow 2에서는 schedule_interval 사용
     catchup=False,
     params={
-        "smoke": False,
-        "pyeonginfo_limit_complexes": 0,
-        "pyeonginfo_sleep": 0.5,
-        "trade_limit_complexes": 0,
-        "trade_limit_areas": 0,
-        "trade_limit_pages": 0,
-        "trade_sleep": 0.5,
-        # KREB(국토부) 경로용 파라미터
-        "kreb_use": True,
-        "kreb_mode": "monthly",  # monthly | range
-        "kreb_monthly_day1_only": True,
-        "kreb_lawd_codes": "",  # 콤마구분, 또는 S3 파일 사용
-        "kreb_lawd_codes_s3": "",
-        "kreb_start_ym": "",
-        "kreb_end_ym": "",
-        "kreb_num_rows": 100,
-        "kreb_limit_codes": 0,
-        "kreb_limit_months": 0,
-        "kreb_limit_pages": 0,
-        "kreb_sleep": 0.5,
-        "kreb_api_bases": "",  # 비워두면 기본 API
-        "kreb_retries": 3,
-        "kreb_backoff": 1.0,
+        # 수집 윈도우: '1m' (최근 1개월) 또는 '10y' (최근 10년)
+        "window": "1m",
     },
     tags=["retrend", "crawler", "minio"],
 ) as dag:
@@ -116,66 +94,47 @@ with DAG(
         get_logs=True,
     )
 
-    extract_pyeonginfo = KubernetesPodOperator(
-        task_id="extract_pyeonginfo_data",
-        name="extract-pyeonginfo-data",
-        namespace="airflow",
-        image="dave126/retrend-crawler:2.8.5",
-        image_pull_policy="Always",
-        cmds=["python"],
-        arguments=["/app/src/extract_pyeonginfo_to_csv_s3.py"],
-        env_vars={
-            "DRY_RUN_SAMPLE": "{{ '1' if params.smoke else '0' }}",
-            "NO_WRITE": "{{ '1' if params.smoke else '0' }}",
-            "PYEONGINFO_LIMIT_COMPLEXES": "{{ params.pyeonginfo_limit_complexes }}",
-            "PYEONGINFO_SLEEP": "{{ params.pyeonginfo_sleep }}"
-        },
-        do_xcom_push=False,
-        is_delete_operator_pod=True,
-        get_logs=True,
-    )
+    # extract_pyeonginfo = KubernetesPodOperator(
+    #     task_id="extract_pyeonginfo_data",
+    #     name="extract-pyeonginfo-data",
+    #     namespace="airflow",
+    #     image="dave126/retrend-crawler:2.8.5",
+    #     image_pull_policy="Always",
+    #     cmds=["python"],
+    #     arguments=["/app/src/extract_pyeonginfo_to_csv_s3.py"],
+    #     env_vars={
+    #         "DRY_RUN_SAMPLE": "{{ '1' if params.smoke else '0' }}",
+    #         "NO_WRITE": "{{ '1' if params.smoke else '0' }}",
+    #         "PYEONGINFO_LIMIT_COMPLEXES": "{{ params.pyeonginfo_limit_complexes }}",
+    #         "PYEONGINFO_SLEEP": "{{ params.pyeonginfo_sleep }}"
+    #     },
+    #     do_xcom_push=False,
+    #     is_delete_operator_pod=True,
+    #     get_logs=True,
+    # )
 
-    extract_trade_history = KubernetesPodOperator(
-        task_id="extract_trade_history_data",
-        name="extract-trade-history-data",
-        namespace="airflow",
-        image="dave126/retrend-crawler:2.8.5",
-        image_pull_policy="Always",
-        cmds=["python"],
-        arguments=["/app/src/extract_trade_history_s3.py"],
-        env_vars={
-            "DRY_RUN_SAMPLE": "{{ '1' if params.smoke else '0' }}",
-            "NO_WRITE": "{{ '1' if params.smoke else '0' }}",
-            "TRADE_LIMIT_COMPLEXES": "{{ params.trade_limit_complexes }}",
-            "TRADE_LIMIT_AREAS": "{{ params.trade_limit_areas }}",
-            "TRADE_LIMIT_PAGES": "{{ params.trade_limit_pages }}",
-            "TRADE_SLEEP": "{{ params.trade_sleep }}"
-        },
-        do_xcom_push=False,
-        is_delete_operator_pod=True,
-        get_logs=True,
-    )
+    # extract_trade_history = KubernetesPodOperator(
+    #     task_id="extract_trade_history_data",
+    #     name="extract-trade-history-data",
+    #     namespace="airflow",
+    #     image="dave126/retrend-crawler:2.8.5",
+    #     image_pull_policy="Always",
+    #     cmds=["python"],
+    #     arguments=["/app/src/extract_trade_history_s3.py"],
+    #     env_vars={
+    #         "DRY_RUN_SAMPLE": "{{ '1' if params.smoke else '0' }}",
+    #         "NO_WRITE": "{{ '1' if params.smoke else '0' }}",
+    #         "TRADE_LIMIT_COMPLEXES": "{{ params.trade_limit_complexes }}",
+    #         "TRADE_LIMIT_AREAS": "{{ params.trade_limit_areas }}",
+    #         "TRADE_LIMIT_PAGES": "{{ params.trade_limit_pages }}",
+    #         "TRADE_SLEEP": "{{ params.trade_sleep }}"
+    #     },
+    #     do_xcom_push=False,
+    #     is_delete_operator_pod=True,
+    #     get_logs=True,
+    # )
 
-    # 한국 부동산원(국토부 실거래가) – 대안 수집 경로 (분기 실행)
-    kreb_gate = ShortCircuitOperator(
-        task_id="kreb_gate",
-        python_callable=lambda **kwargs: bool(kwargs["params"].get("kreb_use", False)),
-    )
-
-    # monthly 모드일 때 매월 1일만 실행 (옵션)
-    def _month_gate(**kwargs):
-        p = kwargs["params"]
-        if p.get("kreb_mode") != "monthly":
-            return True
-        if not p.get("kreb_monthly_day1_only", True):
-            return True
-        exec_date = kwargs["execution_date"]
-        return exec_date.day == 1
-
-    kreb_month_gate = ShortCircuitOperator(
-        task_id="kreb_month_gate",
-        python_callable=_month_gate,
-    )
+    # 한국 부동산원(국토부 실거래가) – 수집 태스크 (두 옵션: 최근 1개월 / 최근 10년)
 
     kreb_apt_trade = KubernetesPodOperator(
         task_id="kreb_apt_trade_bronze",
@@ -187,22 +146,14 @@ with DAG(
         arguments=["/app/src/kreb/extract_apt_trade_to_csv_s3.py"],
         env_vars={
             "KREB_SERVICE_KEY": "{{ var.value.KREB_SERVICE_KEY }}",
-            "KREB_LAWD_CODES": "{{ params.kreb_lawd_codes }}",
-            "KREB_LAWD_CODES_S3": "{{ params.kreb_lawd_codes_s3 or (var.value.KREB_LAWD_CODES_S3 | default('')) }}",
-            # 모드별 기간 기본값: monthly는 실행월, range는 최근 10년
-            "START_YM": "{{ params.kreb_start_ym if params.kreb_start_ym else (execution_date.strftime('%Y%m') if params.kreb_mode == 'monthly' else (macros.datetime.utcnow() - macros.timedelta(days=365*10)).strftime('%Y%m')) }}",
-            "END_YM": "{{ params.kreb_end_ym if params.kreb_end_ym else (execution_date.strftime('%Y%m') if params.kreb_mode == 'monthly' else macros.datetime.utcnow().strftime('%Y%m')) }}",
-            "KREB_NUM_ROWS": "{{ params.kreb_num_rows }}",
-            "KREB_LIMIT_CODES": "{{ params.kreb_limit_codes }}",
-            "KREB_LIMIT_MONTHS": "{{ params.kreb_limit_months }}",
-            "KREB_LIMIT_PAGES": "{{ params.kreb_limit_pages }}",
-            "KREB_SLEEP": "{{ params.kreb_sleep }}",
-            "KREB_API_BASES": "{{ params.kreb_api_bases }}",
-            "KREB_RETRIES": "{{ params.kreb_retries }}",
-            "KREB_BACKOFF": "{{ params.kreb_backoff }}",
-            # 스모크 지원(미리보기/비쓰기)
-            "DRY_RUN_SAMPLE": "{{ '1' if params.smoke else '0' }}",
-            "NO_WRITE": "{{ '1' if params.smoke else '0' }}",
+            # 코드 소스: Airflow Variable 우선 사용
+            "KREB_LAWD_CODES_S3": "{{ var.value.KREB_LAWD_CODES_S3 | default('') }}",
+            "KREB_LAWD_CODES": "{{ var.value.KREB_LAWD_CODES | default('') }}",
+            # 시군구 목록에서 앞 5자리로 LAWD 코드 유도
+            "KREB_SHIGUNGU_S3": "s3://retrend-raw-data/shigungu_list.csv",
+            # 기간: window 파라미터로 결정
+            "START_YM": "{{ (macros.datetime.utcnow() - macros.timedelta(days=365*10)).strftime('%Y%m') if params.window == '10y' else execution_date.strftime('%Y%m') }}",
+            "END_YM": "{{ macros.datetime.utcnow().strftime('%Y%m') if params.window == '10y' else execution_date.strftime('%Y%m') }}",
         },
         do_xcom_push=False,
         is_delete_operator_pod=True,
@@ -224,14 +175,8 @@ with DAG(
     )
 
 
-    start_task \
-        >> extract_shido \
-        >> extract_shigungu \
-        >> extract_eupmeandong \
-        >> extract_complexes
-
-    extract_complexes >> kreb_gate >> kreb_month_gate >> kreb_apt_trade >> end_task
-    extract_complexes >> end_task
+    # KREB 수집만 간단 체인으로 실행
+    start_task >> kreb_apt_trade >> end_task
 
     # start_task \
     #     >> extract_shido \
