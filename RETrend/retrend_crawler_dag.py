@@ -22,6 +22,15 @@ with DAG(
     start_date=local_tz.datetime(2023, 1, 1, 0, 0),  # 반드시 과거 시점
     schedule_interval="0 0 * * *",                   # Airflow 2에서는 schedule_interval 사용
     catchup=False,
+    params={
+        "smoke": False,
+        "pyeonginfo_limit_complexes": 0,
+        "pyeonginfo_sleep": 0.5,
+        "trade_limit_complexes": 0,
+        "trade_limit_areas": 0,
+        "trade_limit_pages": 0,
+        "trade_sleep": 0.5,
+    },
     tags=["retrend", "crawler", "minio"],
 ) as dag:
 
@@ -98,6 +107,13 @@ with DAG(
         image_pull_policy="Always",
         cmds=["python"],
         arguments=["/app/src/extract_pyeonginfo_to_csv_s3.py"],
+        env_vars={
+            "DRY_RUN_SAMPLE": "{{ '1' if params.smoke else '0' }}",
+            "NO_WRITE": "{{ '1' if params.smoke else '0' }}",
+            "PYEONGINFO_LIMIT_COMPLEXES": "{{ params.pyeonginfo_limit_complexes }}",
+            "PYEONGINFO_SLEEP": "{{ params.pyeonginfo_sleep }}",
+            "NAVER_LAND_AUTH": "{{ var.value.NAVER_LAND_AUTH | default('') }}",
+        },
         do_xcom_push=False,
         is_delete_operator_pod=True,
         get_logs=True,
@@ -111,6 +127,15 @@ with DAG(
         image_pull_policy="Always",
         cmds=["python"],
         arguments=["/app/src/extract_trade_history_s3.py"],
+        env_vars={
+            "DRY_RUN_SAMPLE": "{{ '1' if params.smoke else '0' }}",
+            "NO_WRITE": "{{ '1' if params.smoke else '0' }}",
+            "TRADE_LIMIT_COMPLEXES": "{{ params.trade_limit_complexes }}",
+            "TRADE_LIMIT_AREAS": "{{ params.trade_limit_areas }}",
+            "TRADE_LIMIT_PAGES": "{{ params.trade_limit_pages }}",
+            "TRADE_SLEEP": "{{ params.trade_sleep }}",
+            "NAVER_LAND_AUTH": "{{ var.value.NAVER_LAND_AUTH | default('') }}",
+        },
         do_xcom_push=False,
         is_delete_operator_pod=True,
         get_logs=True,
