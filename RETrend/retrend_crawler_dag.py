@@ -190,18 +190,8 @@ with DAG(
             "KREB_LAWD_CODES": "{{ params.kreb_lawd_codes }}",
             "KREB_LAWD_CODES_S3": "{{ params.kreb_lawd_codes_s3 or (var.value.KREB_LAWD_CODES_S3 | default('')) }}",
             # 모드별 기간 기본값: monthly는 실행월, range는 최근 10년
-            "START_YM": "{{
-                params.kreb_start_ym
-                if params.kreb_start_ym
-                else ( execution_date.strftime('%Y%m') if params.kreb_mode == 'monthly'
-                       else (macros.datetime.utcnow() - macros.timedelta(days=365*10)).strftime('%Y%m') )
-            }}",
-            "END_YM": "{{
-                params.kreb_end_ym
-                if params.kreb_end_ym
-                else ( execution_date.strftime('%Y%m') if params.kreb_mode == 'monthly'
-                       else macros.datetime.utcnow().strftime('%Y%m') )
-            }}",
+            "START_YM": "{{ params.kreb_start_ym if params.kreb_start_ym else (execution_date.strftime('%Y%m') if params.kreb_mode == 'monthly' else (macros.datetime.utcnow() - macros.timedelta(days=365*10)).strftime('%Y%m')) }}",
+            "END_YM": "{{ params.kreb_end_ym if params.kreb_end_ym else (execution_date.strftime('%Y%m') if params.kreb_mode == 'monthly' else macros.datetime.utcnow().strftime('%Y%m')) }}",
             "KREB_NUM_ROWS": "{{ params.kreb_num_rows }}",
             "KREB_LIMIT_CODES": "{{ params.kreb_limit_codes }}",
             "KREB_LIMIT_MONTHS": "{{ params.kreb_limit_months }}",
