@@ -133,8 +133,7 @@ with DAG(
             "TRADE_LIMIT_COMPLEXES": "{{ params.trade_limit_complexes }}",
             "TRADE_LIMIT_AREAS": "{{ params.trade_limit_areas }}",
             "TRADE_LIMIT_PAGES": "{{ params.trade_limit_pages }}",
-            "TRADE_SLEEP": "{{ params.trade_sleep }}",
-            "NAVER_LAND_AUTH": "{{ var.value.NAVER_LAND_AUTH | default('') }}",
+            "TRADE_SLEEP": "{{ params.trade_sleep }}"
         },
         do_xcom_push=False,
         is_delete_operator_pod=True,
