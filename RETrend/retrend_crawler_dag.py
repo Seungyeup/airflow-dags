@@ -146,9 +146,6 @@ with DAG(
         arguments=["/app/src/kreb/extract_apt_trade_to_csv_s3.py"],
         env_vars={
             "KREB_SERVICE_KEY": "{{ var.value.KREB_SERVICE_KEY }}",
-            # 코드 소스: Airflow Variable 우선 사용
-            "KREB_LAWD_CODES_S3": "{{ var.value.KREB_LAWD_CODES_S3 | default('') }}",
-            "KREB_LAWD_CODES": "{{ var.value.KREB_LAWD_CODES | default('') }}",
             # 시군구 목록에서 앞 5자리로 LAWD 코드 유도
             "KREB_SHIGUNGU_S3": "s3://retrend-raw-data/shigungu_list.csv",
             # 기간: window 파라미터로 결정
