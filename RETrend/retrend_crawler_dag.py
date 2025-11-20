@@ -111,8 +111,7 @@ with DAG(
             "DRY_RUN_SAMPLE": "{{ '1' if params.smoke else '0' }}",
             "NO_WRITE": "{{ '1' if params.smoke else '0' }}",
             "PYEONGINFO_LIMIT_COMPLEXES": "{{ params.pyeonginfo_limit_complexes }}",
-            "PYEONGINFO_SLEEP": "{{ params.pyeonginfo_sleep }}",
-            "NAVER_LAND_AUTH": "{{ var.value.NAVER_LAND_AUTH | default('') }}",
+            "PYEONGINFO_SLEEP": "{{ params.pyeonginfo_sleep }}"
         },
         do_xcom_push=False,
         is_delete_operator_pod=True,
