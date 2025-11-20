@@ -25,11 +25,11 @@ with DAG(
     params={
         "smoke": False,
         "pyeonginfo_limit_complexes": 0,
-        "pyeonginfo_sleep": 0.5,
+        "pyeonginfo_sleep": 1,
         "trade_limit_complexes": 0,
         "trade_limit_areas": 0,
         "trade_limit_pages": 0,
-        "trade_sleep": 0.5,
+        "trade_sleep": 1,
     },
     tags=["retrend", "crawler", "minio"],
 ) as dag:
