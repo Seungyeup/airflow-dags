@@ -198,7 +198,7 @@ with DAG(
         >> extract_shigungu \
         >> extract_eupmeandong \
         >> extract_complexes \
-        >> kreb_apt_trade_bronze \
+        >> kreb_apt_trade \
         >> end_task
 
     # start_task \
