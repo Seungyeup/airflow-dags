@@ -17,7 +17,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id="retrend_real_estate_crawler",
+    dag_id="retrend_real_estate_crawler_backfill",
     default_args=default_args,
     start_date=local_tz.datetime(2023, 1, 1, 0, 0),  # 반드시 과거 시점
     schedule_interval="0 0 * * *",                   # Airflow 2에서는 schedule_interval 사용
