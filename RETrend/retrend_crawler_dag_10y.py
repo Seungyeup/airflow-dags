@@ -19,14 +19,13 @@ default_args = {
 with DAG(
     dag_id="retrend_real_estate_crawler_backfill",
     default_args=default_args,
-    start_date=local_tz.datetime(2023, 1, 1, 0, 0),  # 반드시 과거 시점
-    schedule_interval="0 0 * * *",                   # Airflow 2에서는 schedule_interval 사용
+    start_date=local_tz.datetime(2023, 1, 1, 0, 0),
+    schedule_interval=None,   # 스케줄 없음 (수동 트리거 전용)
     catchup=False,
     params={
-        # 수집 윈도우: '1m' (최근 1개월) 또는 '10y' (최근 10년)
-        "window": "10y",
+        "window": "10y",      # 항상 10년 백필로 고정
     },
-    tags=["retrend", "crawler", "minio"],
+    tags=["retrend", "crawler", "minio", "backfill"],
 ) as dag:
 
     start_task = KubernetesPodOperator(
