@@ -47,7 +47,7 @@ with DAG(
             # KREB API / 백필 설정
             # 서비스키는 나중엔 Airflow Secret/Variable로 빼는 게 안전
             "KREB_SERVICE_KEY": "taVSJNwCXif5C1TK86D389Yu1NO4irUN5v7l5TOuezgTqZqAU4O0qn9dmu9t1Rs5hULYKVLvWfvnWekpuChnJA==",
-            "KREB_DAILY_LIMIT": "10",  # 테스트용으로 살짝 낮게, 나중에 10000 등으로 올리면 됨
+            "KREB_DAILY_LIMIT": "10000",  # 테스트용으로 살짝 낮게, 나중에 10000 등으로 올리면 됨
 
             # LAWD 코드 CSV / state / output 경로
             "KREB_LAWD_CSV": "s3://retrend-raw-data/shigungu_list.csv",
