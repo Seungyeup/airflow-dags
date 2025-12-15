@@ -33,7 +33,7 @@ with DAG(
         task_id="kreb_backfill_once",
         name="kreb-backfill-once",
         namespace="airflow",  # 네 Airflow가 쓰는 네임스페이스로 맞춰줘
-        image="dave126/kreb-backfill:0.1.0",
+        image="dave126/kreb-backfill:0.1.1",
         # 컨테이너 안에서 실행할 명령
         cmds=["python"],
         arguments=["/app/src/kreb/src/kreb_etl_v2/backfill.py"],
