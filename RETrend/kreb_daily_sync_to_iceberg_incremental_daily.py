@@ -29,14 +29,15 @@ with DAG(
         task_id="kreb_daily_sync_once",
         name="kreb-daily-sync-once",
         namespace="airflow",
-        image="dave126/kreb-backfill:0.1.2",
+        image="dave126/kreb-backfill:0.1.1",
         cmds=["python"],
         arguments=["/app/src/kreb/src/kreb_etl_v2/daily_sync.py"],
         env_vars={
             "MINIO_ENDPOINT": "http://172.30.1.28:9000",
             "MINIO_ACCESS_KEY": "minioadmin",
             "MINIO_SECRET_KEY": "minioadmin",
-            "KREB_SERVICE_KEY": "<PUT_IN_SECRET>",
+            # Airflow Variable `KREB_SERVICE_KEY`로 주입
+            "KREB_SERVICE_KEY": "{{ var.value.KREB_SERVICE_KEY }}",
             "KREB_DAILY_LIMIT": "10000",
             "KREB_LAWD_CSV": "s3://retrend-raw-data/shigungu_list.csv",
             "KREB_DAILY_SYNC_STATE_URI": "s3://retrend-raw-data/kreb_state_daily_sync.json",
