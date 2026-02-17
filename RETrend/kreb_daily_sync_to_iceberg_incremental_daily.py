@@ -29,7 +29,7 @@ with DAG(
         task_id="kreb_daily_sync_once",
         name="kreb-daily-sync-once",
         namespace="airflow",
-        image="dave126/kreb-backfill:0.1.1",
+        image="dave126/kreb-backfill:0.1.2",
         cmds=["python"],
         arguments=["/app/src/kreb/src/kreb_etl_v2/daily_sync.py"],
         env_vars={
