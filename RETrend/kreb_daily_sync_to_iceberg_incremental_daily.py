@@ -55,6 +55,8 @@ with DAG(
         name="spark-kreb-csv-to-iceberg-incremental",
         namespace="airflow",
         image="bitnami/kubectl:1.29",
+        startup_timeout_seconds=600,
+        log_events_on_failure=True,
         cmds=["/bin/sh", "-c"],
         arguments=[
             """
