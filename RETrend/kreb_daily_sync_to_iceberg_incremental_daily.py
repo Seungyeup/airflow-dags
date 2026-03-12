@@ -29,7 +29,7 @@ with DAG(
         task_id="kreb_daily_sync_once",
         name="kreb-daily-sync-once",
         namespace="airflow",
-        image="dave126/kreb-backfill:0.1.2",
+        image="dave126/kreb-backfill:0.1.1",
         cmds=["python"],
         arguments=["/app/src/kreb/src/kreb_etl_v2/daily_sync.py"],
         env_vars={
@@ -54,8 +54,8 @@ with DAG(
         task_id="spark_kreb_csv_to_iceberg_incremental",
         name="spark-kreb-csv-to-iceberg-incremental",
         namespace="airflow",
-        image="bitnami/kubectl:1.29",
-        startup_timeout_seconds=600,
+        image="rancher/kubectl:v1.29.15",
+        startup_timeout_seconds=180,
         log_events_on_failure=True,
         cmds=["/bin/sh", "-c"],
         arguments=[
